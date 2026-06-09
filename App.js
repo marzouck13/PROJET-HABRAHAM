@@ -8,7 +8,7 @@ import OublieMdpScreen from './src/screens/OublieMdpScreen';
 import Pilote1Screen from './src/screens/Pilote1Screen';
 
 export default function App() {
-  const [etatApp, setEtatApp] = useState('CHARGEMENT'); 
+  const [etatApp, setEtatApp] = useState('CHARGEMENT'); // Remplacer par PILOTE1 écrit en grand carractères
 
   useEffect(() => {
     verifierFluxUtilisateur();
@@ -28,7 +28,7 @@ export default function App() {
         
            setEtatApp('ONBOARDING');
            }
-         // setEtatApp('PILOTE1');
+          // setEtatApp('PILOTE1');
         
       }, 3000); 
     } catch (e) {

@@ -14,6 +14,8 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
   // --- ÉTATS DU FORMULAIRE ---
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
+  const [email, setEmail] = useState('');
+  const [npi, setNpi] = useState('');
   const [telephone, setTelephone] = useState('');
   const [passe, setPasse] = useState('');
   const [voirPasse, setVoirPasse] = useState(false);
@@ -26,8 +28,21 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
   // Étape 1 : Envoyer les infos au Backend
   const gererInscription = async () => {
     // 1. Validations locales
-    if (!nom.trim() || !prenom.trim() || !telephone.trim() || !passe.trim()) {
+    if (!nom.trim() || !prenom.trim() || !email.trim() || !npi.trim() || !telephone.trim() || !passe.trim()) {
       Alert.alert("Champs incomplets", "Veuillez remplir toutes les informations.");
+      return;
+    }
+
+    // Validation email
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regexEmail.test(email.trim())) {
+      Alert.alert("Email invalide", "Veuillez entrer une adresse email valide.");
+      return;
+    }
+
+    // Validation NPI (exemple : 8 à 15 chiffres)
+    if (npi.trim().length < 8 || npi.trim().length > 15) {
+      Alert.alert("NPI invalide", "Le Numéro Personnel d'Identification doit comporter entre 8 et 15 caractères.");
       return;
     }
 
@@ -47,6 +62,8 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
     const payload = {
       name: nom,
       firstname: prenom,
+      email: email,
+      NPI: npi,
       number: telephone,
       password: passe
     };
@@ -57,7 +74,7 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
 
       if (response.success) {
         // Le backend a créé le compte et envoyé le SMS
-        console.log("📱 [LOG] Code OTP envoyé par le serveur.");
+        console.log("📱 [LOG]",response.message);
         setEtape(2); 
       } else {
         // Cas : Numéro déjà utilisé, etc.
@@ -149,6 +166,33 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
               <View style={styles.inputStyle}>
                 <MaterialCommunityIcons name="account-outline" size={20} color={Couleurs.vertAgentrix} style={styles.icon} />
                 <TextInput style={StylesCommuns.inputText} placeholder="Prénom" value={prenom} onChangeText={setPrenom} editable={!chargement} />
+              </View>
+
+              <Text style={StylesCommuns.label}>Email</Text>
+              <View style={styles.inputStyle}>
+                <MaterialCommunityIcons name="email-outline" size={20} color={Couleurs.vertAgentrix} style={styles.icon} />
+                <TextInput 
+                  style={StylesCommuns.inputText} 
+                  placeholder="exemple@email.com" 
+                  keyboardType="email-address" 
+                  autoCapitalize="none"
+                  value={email} 
+                  onChangeText={setEmail} 
+                  editable={!chargement} 
+                />
+              </View>
+
+              <Text style={StylesCommuns.label}>NPI (Numéro Personnel d'Identification)</Text>
+              <View style={styles.inputStyle}>
+                <MaterialCommunityIcons name="card-account-details-outline" size={20} color={Couleurs.vertAgentrix} style={styles.icon} />
+                <TextInput 
+                  style={StylesCommuns.inputText} 
+                  placeholder="Votre NPI" 
+                  keyboardType="default"
+                  value={npi} 
+                  onChangeText={setNpi} 
+                  editable={!chargement} 
+                />
               </View>
 
               <Text style={StylesCommuns.label}>Numéro de téléphone</Text>
