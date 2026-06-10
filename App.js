@@ -67,8 +67,8 @@ export default function App() {
 
   if (etatApp === 'INSCRIPTION') {
     return (
-      <InscriptionScreen 
-        auConnexion={() => setEtatApp('CONNEXION')} 
+      <InscriptionScreen
+        auConnexion={() => setEtatApp('CONNEXION')}
         auRetour={() => setEtatApp('CONNEXION')}
       />
     );
