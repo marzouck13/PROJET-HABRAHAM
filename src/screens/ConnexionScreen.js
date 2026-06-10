@@ -31,21 +31,22 @@ const ConnexionScreen = ({ auInscription, auRetour, auOublieMdp, auSuccesConnexi
     console.log("🚀 [LOG] Tentative de connexion...");
 
     try {
-      const response = await AuthService.login(telephone, passe);
-      console.log("📥 [LOG] Réponse reçue :", JSON.stringify(response, null, 2));
+      const response = await AuthService.login(String(telephone), String(passe));
 
       if (response.success) {
-        const { tokens, userId } = response.data[0];
+        // La réponse contient un tableau "data" avec l'utilisateur à l'index 0
+        const userData = response.data[0];
+        const { tokens } = userData;
         
         await AsyncStorage.setItem('userToken', tokens.accessToken);
         await AsyncStorage.setItem('refreshToken', tokens.refreshToken);
-        await AsyncStorage.setItem('userId', userId);
+        await AsyncStorage.setItem('userEmail', userData.email);
+        await AsyncStorage.setItem('userNpi', userData.npi);
+        await AsyncStorage.setItem('userNumber', userData.number);
 
-        console.log("💾 [LOG] Connexion réussie pour l'ID :", userId);
+        console.log("💾 [LOG] Connexion réussie pour le numéro :", userData.number);
         if (auSuccesConnexion) auSuccesConnexion();
       } else {
-        // --- LOGIQUE DE FALLBACK ICI ---
-        // On vérifie si le message du serveur indique que le compte n'existe pas
         const msg = response.message.toLowerCase();
         
         if (msg.includes("non trouvé") || msg.includes("n'existe pas") || msg.includes("not found")) {
@@ -65,7 +66,7 @@ const ConnexionScreen = ({ auInscription, auRetour, auOublieMdp, auSuccesConnexi
       }
 
     } catch (error) {
-      console.error("❌ [LOG] Erreur API :");
+      console.error("❌ [LOG] Erreur API :", error);
       Alert.alert("Erreur de connexion", error.message || "Serveur injoignable.");
     } finally {
       setChargement(false);
