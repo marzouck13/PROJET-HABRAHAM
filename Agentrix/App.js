@@ -28,7 +28,7 @@ export default function App() {
         
            setEtatApp('ONBOARDING');
            }
-          // setEtatApp('PILOTE1');
+           // setEtatApp('PILOTE1');
         
       }, 3000); 
     } catch (e) {
