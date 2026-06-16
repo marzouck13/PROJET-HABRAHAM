@@ -18,46 +18,45 @@ const ConnexionScreen = ({ auInscription, auRetour, auOublieMdp, auSuccesConnexi
 
   const gererConnexion = async () => {
     if (!telephone.trim() || !passe.trim()) {
-      Alert.alert("Champs requis", "Veuillez renseigner votre numéro et votre mot de passe.");
+      Alert.alert("Champs requis", "Veuillez renseigner votre numero et votre mot de passe.");
       return;
     }
 
     if (telephone.trim().length !== 10) {
-      Alert.alert("Numéro invalide", "Le numéro de téléphone doit comporter exactement 10 chiffres.");
+      Alert.alert("Numero invalide", "Le numero de telephone doit comporter exactement 10 chiffres.");
       return;
     }
 
     setChargement(true);
-    console.log("🚀 [LOG] Tentative de connexion...");
+    console.log("[LOG] Tentative de connexion...");
 
     try {
       const response = await AuthService.login(String(telephone), String(passe));
 
       if (response.success) {
-        // La réponse contient un tableau "data" avec l'utilisateur à l'index 0
+        // La reponse contient un tableau "data" avec l'utilisateur a l'index 0
         const userData = response.data[0];
         const { tokens } = userData;
         
         await AsyncStorage.setItem('userToken', tokens.accessToken);
         await AsyncStorage.setItem('refreshToken', tokens.refreshToken);
         await AsyncStorage.setItem('userEmail', userData.email);
-        await AsyncStorage.setItem('userNpi', userData.npi);
         await AsyncStorage.setItem('userNumber', userData.number);
 
-        console.log("💾 [LOG] Connexion réussie pour le numéro :", userData.number);
+        console.log("[LOG] Connexion reussie pour le numero :", userData.number);
         if (auSuccesConnexion) auSuccesConnexion();
       } else {
         const msg = response.message.toLowerCase();
         
-        if (msg.includes("non trouvé") || msg.includes("n'existe pas") || msg.includes("not found")) {
-          console.warn("⚠️ [LOG] Compte inexistant détecté.");
+        if (msg.includes("non trouve") || msg.includes("n'existe pas") || msg.includes("not found")) {
+          console.warn("[LOG] Compte inexistant detecte.");
           
           Alert.alert(
             "Compte introuvable",
-            "Ce numéro n'est pas encore inscrit sur Agentrix. Souhaitez-vous créer un compte ?",
+            "Ce numero n'est pas encore inscrit sur Agentrix. Souhaitez-vous creer un compte ?",
             [
-              { text: "Réessayer", style: "cancel" },
-              { text: "Créer un compte", onPress: () => auInscription(), style: "default" }
+              { text: "Reessayer", style: "cancel" },
+              { text: "Creer un compte", onPress: () => auInscription(), style: "default" }
             ]
           );
         } else {
@@ -66,7 +65,7 @@ const ConnexionScreen = ({ auInscription, auRetour, auOublieMdp, auSuccesConnexi
       }
 
     } catch (error) {
-      console.error("❌ [LOG] Erreur API :", error);
+      console.error("[LOG] Erreur API :", error);
       Alert.alert("Erreur de connexion", error.message || "Serveur injoignable.");
     } finally {
       setChargement(false);
@@ -98,17 +97,17 @@ const ConnexionScreen = ({ auInscription, auRetour, auOublieMdp, auSuccesConnexi
             <Text style={StylesCommuns.grandTitre}>Connexion</Text>
             <View style={styles.barreAccents} />
             <Text style={[StylesCommuns.sousTitre, { marginTop: 10 }]}>
-              Heureux de vous revoir ! Entrez vos accès.
+              Heureux de vous revoir ! Entrez vos acces.
             </Text>
           </View>
 
-          <Text style={StylesCommuns.label}>Numéro de téléphone</Text>
+          <Text style={StylesCommuns.label}>Numero de telephone</Text>
           <View style={styles.inputStyle}>
             <Image source={{uri: 'https://flagcdn.com/w40/bj.png'}} style={styles.flag} />
             <Text style={styles.prefix}>+229</Text>
             <TextInput 
               style={StylesCommuns.inputText} 
-              placeholder="Numéro mobile" 
+              placeholder="Numero mobile" 
               keyboardType="phone-pad" 
               maxLength={10} 
               value={telephone}
@@ -122,7 +121,7 @@ const ConnexionScreen = ({ auInscription, auRetour, auOublieMdp, auSuccesConnexi
             <MaterialCommunityIcons name="lock-outline" size={20} color={Couleurs.vertAgentrix} style={{marginRight: 12}} />
             <TextInput 
               style={StylesCommuns.inputText} 
-              placeholder="••••••••" 
+              placeholder="........" 
               secureTextEntry={!voirPasse}
               value={passe}
               onChangeText={setPasse}
@@ -138,7 +137,7 @@ const ConnexionScreen = ({ auInscription, auRetour, auOublieMdp, auSuccesConnexi
           </View>
 
           <TouchableOpacity style={styles.forgotBtn} onPress={auOublieMdp} disabled={chargement}>
-            <Text style={styles.forgotTxt}>Mot de passe oublié ?</Text>
+            <Text style={styles.forgotTxt}>Mot de passe oublie ?</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 

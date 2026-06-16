@@ -11,24 +11,23 @@ import { StylesCommuns, Couleurs } from '../styles/ThemeAgentrix';
 import { AuthService } from '../services/AgentrixApi';
 
 const InscriptionScreen = ({ auConnexion, auRetour }) => {
-  // --- ÉTATS DU FORMULAIRE ---
+  // --- ETATS DU FORMULAIRE ---
   const [nom, setNom] = useState('');
   const [prenom, setPrenom] = useState('');
   const [email, setEmail] = useState('');
-  const [npi, setNpi] = useState('');
   const [telephone, setTelephone] = useState('');
   const [passe, setPasse] = useState('');
   const [voirPasse, setVoirPasse] = useState(false);
   
-  // --- ÉTATS DE VÉRIFICATION OTP ---
+  // --- ETATS DE VERIFICATION OTP ---
   const [etape, setEtape] = useState(1); // 1: Formulaire, 2: Code SMS
   const [codeOTP, setCodeOTP] = useState('');
   const [chargement, setChargement] = useState(false);
 
-  // Étape 1 : Envoyer les infos au Backend
+  // Etape 1 : Envoyer les infos au Backend
   const gererInscription = async () => {
     // 1. Validations locales
-    if (!nom.trim() || !prenom.trim() || !email.trim() || !npi.trim() || !telephone.trim() || !passe.trim()) {
+    if (!nom.trim() || !prenom.trim() || !email.trim() || !telephone.trim() || !passe.trim()) {
       Alert.alert("Champs incomplets", "Veuillez remplir toutes les informations.");
       return;
     }
@@ -40,80 +39,73 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
       return;
     }
 
-    // Validation NPI (exemple : 8 à 15 chiffres)
-    if (npi.trim().length < 8 || npi.trim().length > 15) {
-      Alert.alert("NPI invalide", "Le Numéro Personnel d'Identification doit comporter entre 8 et 15 caractères.");
-      return;
-    }
-
     if (telephone.trim().length !== 10) {
-      Alert.alert("Numéro invalide", "Le numéro de téléphone doit comporter exactement 10 chiffres.");
+      Alert.alert("Numero invalide", "Le numero de telephone doit comporter exactement 10 chiffres.");
       return;
     }
 
     if (passe.length < 6) {
-      Alert.alert("Sécurité", "Le mot de passe doit contenir au moins 6 caractères.");
+      Alert.alert("Securite", "Le mot de passe doit contenir au moins 6 caracteres.");
       return;
     }
 
     setChargement(true);
-    console.log("🚀 [LOG] Inscription : Envoi des données au serveur...");
+    console.log("[LOG] Inscription : Envoi des donnees au serveur...");
     
     const payload = {
       name: nom,
       firstname: prenom,
       email: email,
-      NPI: npi,
       number: telephone,
       password: passe
     };
 
     try {
       const response = await AuthService.register(payload);
-      console.log("✅ [LOG] Réponse Inscription :", JSON.stringify(response, null, 2));
+      console.log("[LOG] Reponse Inscription :", JSON.stringify(response, null, 2));
 
       if (response.success) {
-        // Le backend a créé le compte et envoyé le SMS
-        console.log("📱 [LOG]",response.message);
+        // Le backend a cree le compte et envoye le SMS
+        console.log("[LOG]",response.message);
         setEtape(2); 
       } else {
-        // Cas : Numéro déjà utilisé, etc.
-        Alert.alert("Erreur", response.message || "Impossible de créer le compte.");
+        // Cas : Numero deja utilise, etc.
+        Alert.alert("Erreur", response.message || "Impossible de creer le compte.");
       }
     } catch (error) {
-      console.error("❌ [LOG] Erreur Inscription :", error);
-      Alert.alert("Erreur réseau", error.message || "Vérifiez votre connexion.");
+      console.error("[LOG] Erreur Inscription :", error);
+      Alert.alert("Erreur reseau", error.message || "Verifiez votre connexion.");
     } finally {
       setChargement(false);
     }
   };
 
-  // Étape 2 : Valider le code OTP réel auprès du Backend
+  // Etape 2 : Valider le code OTP reel aupres du Backend
   const validerCodeEtFinaliser = async () => {
     if (codeOTP.length !== 6) {
-      Alert.alert("Code invalide", "Veuillez entrer le code à 6 chiffres reçu.");
+      Alert.alert("Code invalide", "Veuillez entrer le code a 6 chiffres recu.");
       return;
     }
 
     setChargement(true);
-    console.log("🚀 [LOG] Vérification du code OTP...");
+    console.log("[LOG] Verification du code OTP...");
 
     try {
       const response = await AuthService.verifyCode(telephone, codeOTP);
-      console.log("✅ [LOG] Réponse Vérification :", JSON.stringify(response, null, 2));
+      console.log("[LOG] Reponse Verification :", JSON.stringify(response, null, 2));
 
       if (response.success) {
         Alert.alert(
-          "Inscription réussie ✨", 
-          "Votre compte Agentrix est désormais actif.",
+          "Inscription reussie", 
+          "Votre compte Agentrix est desormais actif.",
           [{ text: "Se connecter", onPress: auConnexion }]
         );
       } else {
-        console.warn("⚠️ [LOG] Code erroné selon le serveur.");
-        Alert.alert("Échec", response.message || "Code incorrect.");
+        console.warn("[LOG] Code errone selon le serveur.");
+        Alert.alert("Echec", response.message || "Code incorrect.");
       }
     } catch (error) {
-      console.error("❌ [LOG] Erreur de validation :", error);
+      console.error("[LOG] Erreur de validation :", error);
       Alert.alert("Erreur", error.message || "Une erreur est survenue lors de la validation.");
     } finally {
       setChargement(false);
@@ -146,13 +138,13 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
           </TouchableOpacity>
 
           {etape === 1 ? (
-            /* --- VUE ÉTAPE 1 : FORMULAIRE --- */
+            /* --- VUE ETAPE 1 : FORMULAIRE --- */
             <View>
               <View style={styles.headerTexte}>
-                <Text style={StylesCommuns.grandTitre}>Créer un compte</Text>
+                <Text style={StylesCommuns.grandTitre}>Creer un compte</Text>
                 <View style={styles.barreAccents} />
                 <Text style={StylesCommuns.sousTitre}>
-                  Rejoignez le réseau Agentrix et gérez vos finances en toute sécurité.
+                  Rejoignez le reseau Agentrix et gerez vos finances en toute securite.
                 </Text>
               </View>
 
@@ -162,10 +154,10 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
                 <TextInput style={StylesCommuns.inputText} placeholder="Nom de famille" value={nom} onChangeText={setNom} editable={!chargement} />
               </View>
 
-              <Text style={StylesCommuns.label}>Prénom</Text>
+              <Text style={StylesCommuns.label}>Prenom</Text>
               <View style={styles.inputStyle}>
                 <MaterialCommunityIcons name="account-outline" size={20} color={Couleurs.vertAgentrix} style={styles.icon} />
-                <TextInput style={StylesCommuns.inputText} placeholder="Prénom" value={prenom} onChangeText={setPrenom} editable={!chargement} />
+                <TextInput style={StylesCommuns.inputText} placeholder="Prenom" value={prenom} onChangeText={setPrenom} editable={!chargement} />
               </View>
 
               <Text style={StylesCommuns.label}>Email</Text>
@@ -182,26 +174,13 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
                 />
               </View>
 
-              <Text style={StylesCommuns.label}>NPI (Numéro Personnel d'Identification)</Text>
-              <View style={styles.inputStyle}>
-                <MaterialCommunityIcons name="card-account-details-outline" size={20} color={Couleurs.vertAgentrix} style={styles.icon} />
-                <TextInput 
-                  style={StylesCommuns.inputText} 
-                  placeholder="Votre NPI" 
-                  keyboardType="default"
-                  value={npi} 
-                  onChangeText={setNpi} 
-                  editable={!chargement} 
-                />
-              </View>
-
-              <Text style={StylesCommuns.label}>Numéro de téléphone</Text>
+              <Text style={StylesCommuns.label}>Numero de telephone</Text>
               <View style={styles.inputStyle}>
                 <Image source={{uri: 'https://flagcdn.com/w40/bj.png'}} style={styles.flag} />
                 <Text style={styles.prefix}>+229</Text>
                 <TextInput 
                   style={StylesCommuns.inputText} 
-                  placeholder="Numéro mobile" 
+                  placeholder="Numero mobile" 
                   keyboardType="phone-pad" 
                   maxLength={10} 
                   value={telephone} 
@@ -215,7 +194,7 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
                 <MaterialCommunityIcons name="lock-outline" size={20} color={Couleurs.vertAgentrix} style={styles.icon} />
                 <TextInput 
                   style={StylesCommuns.inputText} 
-                  placeholder="••••••••" 
+                  placeholder="........" 
                   secureTextEntry={!voirPasse} 
                   value={passe} 
                   onChangeText={setPasse} 
@@ -235,13 +214,13 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
               </TouchableOpacity>
             </View>
           ) : (
-            /* --- VUE ÉTAPE 2 : CODE SMS --- */
+            /* --- VUE ETAPE 2 : CODE SMS --- */
             <View>
               <View style={styles.headerTexte}>
-                <Text style={StylesCommuns.grandTitre}>Vérification</Text>
+                <Text style={StylesCommuns.grandTitre}>Verification</Text>
                 <View style={styles.barreAccents} />
                 <Text style={StylesCommuns.sousTitre}>
-                  Un code de confirmation a été envoyé au <Text style={{fontWeight:'700'}}> +229 {telephone}</Text>.
+                  Un code de confirmation a ete envoye au <Text style={{fontWeight:'700'}}> +229 {telephone}</Text>.
                 </Text>
               </View>
 
@@ -268,14 +247,14 @@ const InscriptionScreen = ({ auConnexion, auRetour }) => {
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.footer} onPress={() => setEtape(1)} disabled={chargement}>
-                <Text style={styles.footerTxt}>Modifier le numéro de téléphone</Text>
+                <Text style={styles.footerTxt}>Modifier le numero de telephone</Text>
               </TouchableOpacity>
             </View>
           )}
 
           {etape === 1 && (
             <TouchableOpacity style={styles.footer} onPress={auConnexion}>
-              <Text style={styles.footerTxt}>Déjà inscrit ? <Text style={styles.footerLink}>Se connecter</Text></Text>
+              <Text style={styles.footerTxt}>Deja inscrit ? <Text style={styles.footerLink}>Se connecter</Text></Text>
             </TouchableOpacity>
           )}
         </ScrollView>

@@ -21,7 +21,7 @@ import { AuthService } from '../services/AgentrixApi';
 const { width } = Dimensions.get('window');
 
 const OublieMdpScreen = ({ auRetour }) => {
-  // Gestion des étapes : 1 = Envoi OTP, 2 = Vérification & Nouveau MDP
+  // Gestion des etapes : 1 = Envoi OTP, 2 = Verification & Nouveau MDP
   const [etape, setEtape] = useState(1);
   const [telephone, setTelephone] = useState('');
   const [codeOTP, setCodeOTP] = useState('');
@@ -29,79 +29,79 @@ const OublieMdpScreen = ({ auRetour }) => {
   const [voirPasse, setVoirPasse] = useState(false);
   const [chargement, setChargement] = useState(false);
 
-  // Étape 1 : Envoyer le code
+  // Etape 1 : Envoyer le code
   const gererEnvoiCode = async () => {
-    // Validation du numéro (10 chiffres)
+    // Validation du numero (10 chiffres)
     if (!telephone.trim() || telephone.trim().length !== 10) {
-      Alert.alert("Numéro invalide", "Veuillez entrer un numéro de téléphone valide à 10 chiffres.");
+      Alert.alert("Numero invalide", "Veuillez entrer un numero de telephone valide a 10 chiffres.");
       return;
     }
     setChargement(true);
     
     try {
-          console.log(`🚀 [AUTH_RECOVERY] Tentative d'envoi OTP pour : ${telephone}`);
+          console.log(`[AUTH_RECOVERY] Tentative d'envoi OTP pour : ${telephone}`);
           const response = await AuthService.forgotPassword(telephone);
-          console.log("📩 [SERVER_RESPONSE] ForgotPassword :", JSON.stringify(response, null, 2));
+          console.log("[SERVER_RESPONSE] ForgotPassword :", JSON.stringify(response, null, 2));
           
           if (response.success) {
-            console.log("📱 [OTP_SENT] Le code de récupération a été expédié.");
+            console.log("[OTP_SENT] Le code de recuperation a ete expedie.");
             setEtape(2); 
           } else {
             Alert.alert("Erreur", response.message || "Impossible d'envoyer le numero.");
           }
         } catch (error) {
-          console.error("❌ [NETWORK_ERROR] Échec de la demande OTP :", error);
-          Alert.alert("Erreur réseau", error.message || "Vérifiez votre connexion.");
+          console.error("[NETWORK_ERROR] Echec de la demande OTP :", error);
+          Alert.alert("Erreur reseau", error.message || "Verifiez votre connexion.");
         } finally {
           setChargement(false);
         }
   };
 
-  // Étape 2 : Réinitialiser
+  // Etape 2 : Reinitialiser
   const gererReinitialisation = async () => {
-    // 1. Vérification des champs
+    // 1. Verification des champs
     if (!codeOTP.trim() || !nouveauPasse.trim()) {
-      Alert.alert("Champs requis", "Veuillez remplir le code reçu et votre nouveau mot de passe.");
+      Alert.alert("Champs requis", "Veuillez remplir le code recu et votre nouveau mot de passe.");
       return;
     }
 
-    // 2. Vérification du code OTP (6 chiffres)
+    // 2. Verification du code OTP (6 chiffres)
     if (codeOTP.trim().length !== 6) {
-      Alert.alert("Code incomplet", "Le code de vérification doit comporter 6 chiffres.");
+      Alert.alert("Code incomplet", "Le code de verification doit comporter 6 chiffres.");
       return;
     }
 
-    // 3. Validation de la complexité du mot de passe (6 caractères uniques)
+    // 3. Validation de la complexite du mot de passe (6 caracteres uniques)
     const caracteresUniques = new Set(nouveauPasse).size;
     if (caracteresUniques < 6) {
       Alert.alert(
-        "Sécurité insuffisante", 
-        "Votre nouveau mot de passe doit contenir au moins 6 caractères différents."
+        "Securite insuffisante", 
+        "Votre nouveau mot de passe doit contenir au moins 6 caracteres differents."
       );
       return;
     }
 
     setChargement(true);
     try {
-         console.log(`🔐 [AUTH_RESET] Réinitialisation en cours pour ${telephone}`);
-         // Correction syntaxe : Appel des arguments selon la définition du service
+         console.log(`[AUTH_RESET] Reinitialisation en cours pour ${telephone}`);
+         // Correction syntaxe : Appel des arguments selon la definition du service
          const paload={
           number:telephone,
           code:codeOTP,
           newPassword:nouveauPasse
          }
          const response = await AuthService.resetPassword(paload);
-         console.log("✅ [SERVER_RESPONSE] ResetPassword :", JSON.stringify(response, null, 2));
+         console.log("[SERVER_RESPONSE] ResetPassword :", JSON.stringify(response, null, 2));
    
          if (response.success) {
-           console.log("✨ [SUCCESS] Mot de passe réinitialisé avec succès.");
-           Alert.alert("Succès", "Votre mot de passe a été modifié.", [{ text: "OK", onPress: auRetour }]);
+           console.log("[SUCCESS] Mot de passe reinitialise avec succes.");
+           Alert.alert("Succes", "Votre mot de passe a ete modifie.", [{ text: "OK", onPress: auRetour }]);
          } else {
-           Alert.alert("Erreur", response.message || "Impossible de réinitialiser.");
+           Alert.alert("Erreur", response.message || "Impossible de reinitialiser.");
          }
        } catch (error) {
-         console.error("❌ [API_ERROR] Échec lors du changement de mot de passe :", error);
-         Alert.alert("Erreur réseau", error.message || "Vérifiez votre connexion.");
+         console.error("[API_ERROR] Echec lors du changement de mot de passe :", error);
+         Alert.alert("Erreur reseau", error.message || "Verifiez votre connexion.");
        } finally {
          setChargement(false);
        }
@@ -113,7 +113,7 @@ const OublieMdpScreen = ({ auRetour }) => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        {/* Éléments de Décoration en Arrière-plan */}
+        {/* Elements de Decoration en Arriere-plan */}
         <View style={styles.cercleDeco1} />
         <View style={styles.cercleDeco2} />
         <View style={styles.cercleDeco3} />
@@ -134,26 +134,26 @@ const OublieMdpScreen = ({ auRetour }) => {
 
           <View style={styles.headerTexte}>
             <Text style={[StylesCommuns.grandTitre, {textAlign: 'left'}]}>
-              {etape === 1 ? "Mot de passe oublié" : "Réinitialisation"}
+              {etape === 1 ? "Mot de passe oublie" : "Reinitialisation"}
             </Text>
             <View style={styles.barreAccents} />
             <Text style={[StylesCommuns.sousTitre, {textAlign: 'left', marginTop: 10}]}>
               {etape === 1 
-                ? "Entrez votre numéro pour recevoir un code de vérification par SMS." 
-                : "Entrez le code reçu et choisissez votre nouveau mot de passe."}
+                ? "Entrez votre numero pour recevoir un code de verification par SMS." 
+                : "Entrez le code recu et choisissez votre nouveau mot de passe."}
             </Text>
           </View>
 
-          {/* --- ÉTAPE 1 : RÉCUPÉRATION DU COMPTE --- */}
+          {/* --- ETAPE 1 : RECUPERATION DU COMPTE --- */}
           {etape === 1 && (
             <View>
-              <Text style={StylesCommuns.label}>Numéro de téléphone</Text>
+              <Text style={StylesCommuns.label}>Numero de telephone</Text>
               <View style={styles.inputStyle}>
                 <Image source={{uri: 'https://flagcdn.com/w40/bj.png'}} style={styles.flag} />
                 <Text style={styles.prefix}>+229</Text>
                 <TextInput 
                   style={StylesCommuns.inputText} 
-                  placeholder="Numéro mobile" 
+                  placeholder="Numero mobile" 
                   keyboardType="phone-pad"
                   maxLength={10}
                   value={telephone}
@@ -176,15 +176,15 @@ const OublieMdpScreen = ({ auRetour }) => {
             </View>
           )}
 
-          {/* --- ÉTAPE 2 : VALIDATION ET NOUVEAU MDP --- */}
+          {/* --- ETAPE 2 : VALIDATION ET NOUVEAU MDP --- */}
           {etape === 2 && (
             <View>
-              <Text style={StylesCommuns.label}>Code de vérification (OTP)</Text>
+              <Text style={StylesCommuns.label}>Code de verification (OTP)</Text>
               <View style={styles.inputStyle}>
                 <MaterialCommunityIcons name="shield-check-outline" size={20} color={Couleurs.vertAgentrix} style={styles.icon} />
                 <TextInput 
                   style={StylesCommuns.inputText} 
-                  placeholder="Code à 6 chiffres" 
+                  placeholder="Code a 6 chiffres" 
                   keyboardType="number-pad"
                   value={codeOTP}
                   onChangeText={setCodeOTP}
@@ -198,7 +198,7 @@ const OublieMdpScreen = ({ auRetour }) => {
                 <MaterialCommunityIcons name="lock-outline" size={20} color={Couleurs.vertAgentrix} style={styles.icon} />
                 <TextInput 
                   style={StylesCommuns.inputText} 
-                  placeholder="••••••••" 
+                  placeholder="........" 
                   secureTextEntry={!voirPasse}
                   value={nouveauPasse}
                   onChangeText={setNouveauPasse}
@@ -227,18 +227,18 @@ const OublieMdpScreen = ({ auRetour }) => {
               <TouchableOpacity onPress={
                 async () =>{
                   try {
-                    console.log("🔄 [RETRY] Demande de renvoi du code OTP...");
+                    console.log("[RETRY] Demande de renvoi du code OTP...");
                     const response = await AuthService.forgotPassword(telephone);
-                    console.log("📩 [SERVER_RESPONSE] Resend OTP :", JSON.stringify(response, null, 2));
+                    console.log("[SERVER_RESPONSE] Resend OTP :", JSON.stringify(response, null, 2));
           
                     if (response.success) {
-                      console.log("📱 [OTP_RESENT] Nouveau code envoyé avec succès.");
+                      console.log("[OTP_RESENT] Nouveau code envoye avec succes.");
                     } else {
                       Alert.alert("Erreur", response.message || "Impossible de renvoyer le code.");
                     }
                   } catch (error) {
-                    console.error("❌ [API_ERROR] Échec lors du renvoi :", error);
-                    Alert.alert("Erreur réseau", error.message || "Vérifiez votre connexion.");
+                    console.error("[API_ERROR] Echec lors du renvoi :", error);
+                    Alert.alert("Erreur reseau", error.message || "Verifiez votre connexion.");
                   } finally {
                     setChargement(false);
                   }

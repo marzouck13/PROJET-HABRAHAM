@@ -6,9 +6,11 @@ import ConnexionScreen from './src/screens/ConnexionScreen';
 import InscriptionScreen from './src/screens/InscriptionScreen';
 import OublieMdpScreen from './src/screens/OublieMdpScreen';
 import Pilote1Screen from './src/screens/Pilote1Screen';
+import TransfertScreen from './src/screens/TransfertScreen';
+import ForfaitScreen from './src/screens/ForfaitScreen';
 
 export default function App() {
-  const [etatApp, setEtatApp] = useState('CHARGEMENT'); // Remplacer par PILOTE1 écrit en grand carractères
+  const [etatApp, setEtatApp] = useState('CHARGEMENT');
 
   useEffect(() => {
     verifierFluxUtilisateur();
@@ -16,26 +18,23 @@ export default function App() {
 
   const verifierFluxUtilisateur = async () => {
     try {
-       await AsyncStorage.clear(); // Utile pour tester l'onboarding à nouveau en dev
+      // await AsyncStorage.clear(); // Utile pour tester l'onboarding à nouveau en dev
       
       const dejaVisite = await AsyncStorage.getItem('@deja_visite');
       
       setTimeout(() => {
         // Si dejaVisite existe et vaut 'true', on va direct à la connexion
-          if (dejaVisite === 'true') {
-           setEtatApp('CONNEXION'); 
-           } else {
-        
-           setEtatApp('ONBOARDING');
-           }
-           // setEtatApp('PILOTE1');
-        
+        // if (dejaVisite === 'true') {
+        //   setEtatApp('CONNEXION'); 
+        // } else {
+        //   setEtatApp('ONBOARDING');
+        // }
+        setEtatApp('PILOTE1');
       }, 3000); 
     } catch (e) {
       setEtatApp('ONBOARDING');
     }
   };
-
 
   const finaliserOnboarding = async (prochainEcran) => {
     await AsyncStorage.setItem('@deja_visite', 'true');
@@ -83,7 +82,15 @@ export default function App() {
   }
 
   if (etatApp === 'PILOTE1') {
-    return <Pilote1Screen />;
+    return <Pilote1Screen setAppState={setEtatApp} />;
+  }
+
+  if (etatApp === 'TRANSFERT') {
+    return <TransfertScreen setAppState={setEtatApp} />;
+  }
+
+  if (etatApp === 'FORFAIT') {
+    return <ForfaitScreen setAppState={setEtatApp} />;
   }
 
   return null;

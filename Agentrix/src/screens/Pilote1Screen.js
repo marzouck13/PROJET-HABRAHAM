@@ -7,15 +7,16 @@ import {
   TouchableOpacity, 
   ScrollView,
   ActivityIndicator,
-  Dimensions
+  Dimensions,
+  Image
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StylesCommuns, Couleurs } from '../styles/ThemeAgentrix';
 
 const { width } = Dimensions.get('window');
 
-const Pilote1Screen = () => {
-  // --- ÉTATS RÉELS ---
+const Pilote1Screen = ({ setAppState }) => {
+  // --- ETATS REELS ---
   const [chargement, setChargement] = useState(true);
   const [ongletActif, setOngletActif] = useState('ACCUEIL');
   const [donneesAgent, setDonneesAgent] = useState({
@@ -26,6 +27,34 @@ const Pilote1Screen = () => {
   });
   const [voirSolde, setVoirSolde] = useState(true);
 
+  // Liste des operateurs configures avec leurs chemins d'images locaux
+  const [operateurs, setOperateurs] = useState([
+    { 
+      id: 'mtn', 
+      nom: 'MTN Benin', 
+      code: 'MTN', 
+      solde: 1250000, 
+      couleur: '#FFCC00', 
+      logo: require('../../assets/images/mtn.png') 
+    },
+    { 
+      id: 'moov', 
+      nom: 'Moov Africa', 
+      code: 'MOOV', 
+      solde: 950000, 
+      couleur: '#0062ad', 
+      logo: require('../../assets/images/moov.png') 
+    },
+    { 
+      id: 'celtiis', 
+      nom: 'Celtiis', 
+      code: 'CELTIIS', 
+      solde: 245000, 
+      couleur: '#1a3a6e', 
+      logo: require('../../assets/images/celtiis.png') 
+    }
+  ]);
+
   // --- LOGIQUE BACKEND ---
   useEffect(() => {
     recupererInfosTableauBord();
@@ -34,27 +63,58 @@ const Pilote1Screen = () => {
   const recupererInfosTableauBord = async () => {
     try {
       setChargement(true);
-      // Appel API réel à venir ici
-      // const res = await AuthService.getDashboardData();
-      // setDonneesAgent(res);
+      // Appel API reel a venir ici
       setChargement(false);
     } catch (error) {
-      console.error("❌ [PILOTE1] Erreur fetch:", error);
+      console.error("[PILOTE1] Erreur fetch:", error);
       setChargement(false);
+    }
+  };
+
+  // --- FONCTION DE NAVIGATION MANUELLE ---
+  const gererNavigation = (nom) => {
+    setOngletActif(nom);
+    
+    if (setAppState) {
+      switch(nom) {
+        case 'ACCUEIL':
+          // Deja sur l'accueil, ne rien faire
+          break;
+        case 'HISTORIQUE':
+          setAppState('HISTORIQUE');
+          break;
+        case 'TRANSFERT':
+          setAppState('TRANSFERT');
+          break;
+        case 'FORFAIT':
+          setAppState('FORFAIT');
+          break;
+        case 'PROFIL':
+          setAppState('PROFIL');
+          break;
+        default:
+          break;
+      }
     }
   };
 
   // --- COMPOSANT INTERNE : BOUTON NAV ---
   const NavItem = ({ nom, icone, label }) => {
     const estActif = ongletActif === nom;
+    
+    let nomIcone = estActif ? icone : `${icone}-outline`;
+    if (!estActif && (icone === 'cash-fast' || icone === 'cellphone-wireless')) {
+      nomIcone = icone; 
+    }
+
     return (
       <TouchableOpacity 
         style={styles.navItem} 
-        onPress={() => setOngletActif(nom)}
+        onPress={() => gererNavigation(nom)}
         activeOpacity={0.7}
       >
         <MaterialCommunityIcons 
-          name={estActif ? icone : `${icone}-outline`} 
+          name={nomIcone} 
           size={24} 
           color={estActif ? Couleurs.vertAgentrix : Couleurs.texteGris} 
         />
@@ -70,7 +130,7 @@ const Pilote1Screen = () => {
     <SafeAreaView style={StylesCommuns.conteneur}>
       <ScrollView 
         showsVerticalScrollIndicator={false} 
-        contentContainerStyle={{ paddingBottom: 100 }} // Espace pour la barre de nav
+        contentContainerStyle={{ paddingBottom: 120 }} 
       >
         
         {/* --- HEADER SECTION --- */}
@@ -83,7 +143,7 @@ const Pilote1Screen = () => {
             
             <View style={styles.textContainer}>
               <Text style={styles.salutation}>Salut cher Agent,</Text>
-              <Text style={styles.userName}>{donneesAgent.prenom} {donneesAgent.nom} 👋</Text>
+              <Text style={styles.userName}>{donneesAgent.prenom} {donneesAgent.nom}</Text>
             </View>
           </View>
 
@@ -101,10 +161,14 @@ const Pilote1Screen = () => {
 
         {/* --- CARTE SOLDE (WALLET) --- */}
         <View style={styles.walletCard}>
+          <View style={styles.cercleDeco1} />
+          <View style={styles.cercleDeco2} />
+          <View style={styles.cercleDeco3} />
+          
           <View style={styles.walletHeader}>
             <Text style={styles.walletLabel}>SOLDE TOTAL</Text>
             <TouchableOpacity style={styles.statsBtn}>
-               <MaterialCommunityIcons name="chart-bar" size={20} color={Couleurs.blancPur} />
+              <MaterialCommunityIcons name="chart-bar" size={20} color={Couleurs.blancPur} />
             </TouchableOpacity>
           </View>
 
@@ -113,7 +177,7 @@ const Pilote1Screen = () => {
               <ActivityIndicator color={Couleurs.blancPur} />
             ) : (
               <Text style={styles.balanceText}>
-                {voirSolde ? donneesAgent.solde.toLocaleString() : "••••••"} 
+                {voirSolde ? donneesAgent.solde.toLocaleString() : "......"} 
                 <Text style={styles.currencyText}> FCFA</Text>
               </Text>
             )}
@@ -135,25 +199,49 @@ const Pilote1Screen = () => {
           </TouchableOpacity>
 
           <View style={styles.walletIconBg}>
-             <MaterialCommunityIcons name="wallet" size={80} color="rgba(255,255,255,0.15)" />
+            <MaterialCommunityIcons name="wallet" size={80} color="rgba(255, 255, 255, 0.35)" />
           </View>
         </View>
 
-        {/* Les autres sections (Stats, Services) seront ajoutées ici */}
+        {/* --- SECTION DES OPERATEURS --- */}
+        {operateurs && operateurs.length > 0 && (
+          <View style={styles.sectionOperateurs}>
+            <Text style={styles.titreSection}>Mes Comptes Operateurs</Text>
+            
+            <View style={styles.listeOperateursContainer}>
+              {operateurs.map((op) => (
+                <View key={op.id} style={styles.carteOperateur}>
+                  <View style={styles.opHeaderRow}>
+                    <View style={styles.logoConteneur}>
+                      <Image 
+                        source={op.logo} 
+                        style={styles.logoOperateur} 
+                        resizeMode="contain" 
+                      />
+                    </View>
+                    <Text style={styles.opLabelTexte}>{op.nom}</Text>
+                  </View>
+                  
+                  <View style={styles.opSoldeRow}>
+                    <Text style={styles.opSoldeTexte}>
+                      {voirSolde ? op.solde.toLocaleString() : "........."}
+                      <Text style={styles.opDeviseTexte}> FCFA</Text>
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
       </ScrollView>
 
-      {/* --- BARRE DE NAVIGATION BASSE (FIXE) --- */}
+      {/* --- BARRE DE NAVIGATION BASSE --- */}
       <View style={styles.bottomNav}>
         <NavItem nom="ACCUEIL" icone="home" label="Accueil" />
-        <NavItem nom="HISTORIQUE" icone="clipboard-text" label="Activités" />
-        
-        {/* Bouton Central (Action rapide) */}
-        <TouchableOpacity style={styles.centralBtn} activeOpacity={0.8}>
-           <MaterialCommunityIcons name="plus" size={36} color={Couleurs.blancPur} />
-        </TouchableOpacity>
-
-        <NavItem nom="RESEAU" icone="account-group" label="Réseau" />
+        <NavItem nom="HISTORIQUE" icone="clipboard-text" label="Historique" />
+        <NavItem nom="TRANSFERT" icone="cash-fast" label="Transfert" />
+        <NavItem nom="FORFAIT" icone="cellphone-wireless" label="Forfait" />
         <NavItem nom="PROFIL" icone="account" label="Profil" />
       </View>
 
@@ -226,7 +314,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFF',
   },
   walletCard: {
-    backgroundColor: '#0a6230df', 
+    backgroundColor: '#0c803ef7', 
     marginHorizontal: 10, 
     borderRadius: 14,
     padding: 20,
@@ -284,25 +372,88 @@ const styles = StyleSheet.create({
     bottom: -3,
     right: -3,
   },
-  // --- BOTTOM NAV STYLES ---
+  sectionOperateurs: {
+    marginTop: 30,
+    paddingHorizontal: 12,
+  },
+  titreSection: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Couleurs.texteNoir,
+    marginBottom: 12,
+    letterSpacing: 0.3,
+  },
+  listeOperateursContainer: {
+    flexDirection: 'column',
+    gap: 10,
+  },
+  carteOperateur: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    shadowColor: '#0000008f',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  opHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoConteneur: {
+    width: 65,
+    height: 65,
+    borderRadius: 10,
+    backgroundColor: '#f9fafb62',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  logoOperateur: {
+    width: '100%',
+    height: '100%',
+  },
+  opLabelTexte: {
+    marginLeft: 12,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  opSoldeRow: {
+    alignItems: 'flex-end',
+  },
+  opSoldeTexte: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Couleurs.texteNoir,
+  },
+  opDeviseTexte: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: Couleurs.texteGris,
+  },
   bottomNav: {
     position: 'absolute',
-    bottom: 29,
-    left: 20,
-    right: 20,
+    bottom: 45,
+    left: 10,
+    right: 10,
     height: 69,
     backgroundColor: '#FFF',
     borderRadius: 15,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    // Ombre pour le relief flat
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 9 },
     shadowOpacity: 0.1,
     shadowRadius: 20,
-    elevation: 5,
-    paddingHorizontal: 5,
+    elevation: 6,
+    paddingHorizontal: 2,
   },
   navItem: {
     alignItems: 'center',
@@ -322,17 +473,36 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: Couleurs.vertAgentrix,
   },
-  centralBtn: {
-    width: 55,
-    height: 55,
-    borderRadius: 15,
-    backgroundColor: Couleurs.vertAgentrix,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -35, // Effet flottant
-    borderWidth: 5,
-    borderColor: '#FFF',
-  }
+  cercleDeco1: {
+    position: 'absolute',
+    top: -30,
+    right: -30,
+    width: 102,
+    height: 102,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.13)',
+    zIndex: 0,
+  },
+  cercleDeco2: {
+    position: 'absolute',
+    bottom: -20,
+    left: -20,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
+    zIndex: 0,
+  },
+  cercleDeco3: {
+    position: 'absolute',
+    top: '9%',
+    left: 95,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(218, 217, 217, 0.14)',
+    zIndex: 0,
+  },
 });
 
 export default Pilote1Screen;
