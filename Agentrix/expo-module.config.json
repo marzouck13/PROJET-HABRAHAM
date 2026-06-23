@@ -1,0 +1,9 @@
+{
+  "platforms": {
+    "android": {
+      "modules": [
+        "com.anonymous.momoautomation.MomoBridge"
+      ]
+    }
+  }
+}

@@ -33,3 +33,10 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+
+#android
+android
+idea
+ios
+.idea
