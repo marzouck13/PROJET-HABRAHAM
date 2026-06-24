@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { DeviceEventEmitter, LogBox, NativeModules, Alert, View, Text, TouchableOpacity, StyleSheet } from 'react-native'; 
+import {
+  DeviceEventEmitter,
+  LogBox,
+  NativeModules,
+  Alert,
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import EcranChargement from './src/components/EcranChargement';
 import OnboardingScreen from './src/screens/OnboardingScreen';
@@ -13,160 +22,146 @@ import { ussdService } from './src/services/ussd';
 
 LogBox.ignoreLogs(['Setting a timer']);
 
-// Récupération du pont natif traditionnel
+// Module natif (pour info, mais pas utilisé pour bloquer)
 const MomoAutomationModule = NativeModules.MomoAutomationModule;
 
 export default function App() {
   const [etatApp, setEtatApp] = useState('CHARGEMENT');
   const [historiqueLogs, setHistoriqueLogs] = useState([]);
-  const [moduleEstActif, setModuleEstActif] = useState(false); // État de santé du module natif
-  
+  const [moduleEstActif, setModuleEstActif] = useState(false);
   const intervalleVerification = useRef(null);
 
-  // Enregistre un événement dans l'historique visible sur le téléphone
-  const notifierEvenement = (titre, message) => {
+  // ----- Fonctions (en français) -----
+  const ajouterEvenement = (titre, message) => {
     const horodatage = new Date().toLocaleTimeString();
-    const nouvelleLigne = `[${horodatage}] ${titre}: ${message}`;
-    setHistoriqueLogs(prevLogs => [nouvelleLigne, ...prevLogs]);
+    setHistoriqueLogs(prev => [`[${horodatage}] ${titre}: ${message}`, ...prev]);
   };
 
-  // Fonction de vérification de l'état du module et de ses services
-  const verifierStatutModuleEnContinu = async () => {
-    // 1. Vérification de la présence physique de la classe Native
+  // Vérification passive (juste pour le diagnostic, pas de conséquence)
+  const verifierModule = async () => {
     if (!MomoAutomationModule) {
-      if (moduleEstActif !== false) {
-        setModuleEstActif(false);
-        notifierEvenement("CRITIQUE", "Le module Kotlin s'est déconnecté ou est introuvable !");
-      }
+      setModuleEstActif(false);
+      ajouterEvenement('INFO', 'Module Kotlin non détecté (mode libre)');
       return;
     }
-
-    // 2. Test d'appel de fonction (Ping) pour valider que les services répondent
-    if (typeof MomoAutomationModule.initializeNotificationListener === 'function') {
-      try {
-        // On effectue un micro-appel pour s'assurer que le thread natif répond toujours
-        const statutInterne = await MomoAutomationModule.initializeNotificationListener();
-        if (statutInterne && !moduleEstActif) {
-          setModuleEstActif(true);
-          notifierEvenement("STATUT", "Module Kotlin détecté et Services USSD/SMS DISPONIBLES ✅");
-        }
-      } catch (erreur) {
-        if (moduleEstActif !== false) {
-          setModuleEstActif(false);
-          notifierEvenement("ERREUR SERVICE", `Le module est présent mais indisponible : ${erreur.message}`);
-        }
-      }
-    } else {
-      if (moduleEstActif !== false) {
-        setModuleEstActif(false);
-        notifierEvenement("STRUCTURE", "La méthode de vérification est absente du module Kotlin.");
-      }
+    try {
+      const statut = await MomoAutomationModule.initializeNotificationListener();
+      setModuleEstActif(!!statut);
+      ajouterEvenement('INFO', `Module ${statut ? 'actif' : 'inactif'} (mode libre)`);
+    } catch {
+      setModuleEstActif(false);
+      ajouterEvenement('INFO', 'Erreur de vérification (mode libre)');
     }
   };
 
-  // Affichage manuel de l'historique complet lors de l'appui sur le bouton
-  const afficherRapportGlobal = () => {
-    const statutActuel = moduleEstActif ? "🟢 ACTIF (Services OK)" : "🔴 INACTIF (Indisponible)";
-    const entete = `Statut actuel : ${statutActuel}\n\n`;
-    
-    if (historiqueLogs.length === 0) {
-      Alert.alert("Moniteur Natif", `${entete}Aucun événement enregistré.`, [{ text: "Fermer" }]);
-    } else {
-      Alert.alert(
-        "Moniteur d'Automatisation", 
-        entete + historiqueLogs.join("\n\n"), 
-        [{ text: "Fermer" }]
-      );
-    }
+  const afficherHistorique = () => {
+    const statut = moduleEstActif ? '🟢 ACTIF' : '🔴 INACTIF';
+    const entete = `Statut : ${statut}\n\n`;
+    Alert.alert(
+      'Moniteur d\'automatisation',
+      entete + (historiqueLogs.length ? historiqueLogs.join('\n\n') : 'Aucun événement.')
+    );
   };
 
-  useEffect(() => {
-    verifierFluxUtilisateur();
-    
-    if (ussdService && typeof ussdService.initialize === 'function') {
-      ussdService.initialize().catch(err => 
-        notifierEvenement("UssdService JS", `Échec initialisation passive: ${err.message}`)
-      );
-    }
-
-    // Premier test immédiat au démarrage
-    verifierStatutModuleEnContinu();
-
-    // Configuration de la vérification continue (toutes les 3000ms / 3 secondes)
-    intervalleVerification.current = setInterval(() => {
-      verifierStatutModuleEnContinu();
-    }, 3000);
-
-    // Écoute dynamique des SMS intercepte par le module
-    let abonnementSms = null;
-    if (MomoAutomationModule) {
-      abonnementSms = DeviceEventEmitter.addListener('onSmsReceived', (evenement) => {
-        const corpsMessage = evenement?.text || "Aucun contenu texte";
-        notifierEvenement("SMS REÇU", `Contenu : ${corpsMessage}`);
-        Alert.alert("SMS Intercepté", corpsMessage);
-      });
-    }
-
-    return () => {
-      if (intervalleVerification.current) {
-        clearInterval(intervalleVerification.current);
-      }
-      if (abonnementSms) {
-        abonnementSms.remove();
-      }
-    };
-  }, []);
-
-  const verifierFluxUtilisateur = async () => {
+  const verifierPremiereVisite = async () => {
     try {
       const dejaVisite = await AsyncStorage.getItem('@deja_visite');
       setTimeout(() => {
-        if (dejaVisite === 'true') {
-          setEtatApp('PILOTE1'); 
-        } else {
-          setEtatApp('ONBOARDING');
-        }
+        await AsyncStorage.clear();
+        setEtatApp(dejaVisite === 'true' ? 'PILOTE1' : 'ONBOARDING');
       }, 2000);
-    } catch (e) {
+    } catch {
       setEtatApp('ONBOARDING');
     }
   };
 
-  const finaliserOnboarding = async (prochainEcran) => {
-    try {
-      await AsyncStorage.setItem('@deja_visite', 'true');
-    } catch (e) {
-      notifierEvenement("AsyncStorage", `Erreur : ${e.message}`);
-    }
+  const terminerOnboarding = async (prochainEcran) => {
+    await AsyncStorage.setItem('@deja_visite', 'true');
     setEtatApp(prochainEcran);
   };
 
+  // ----- Effets -----
+  useEffect(() => {
+    verifierPremiereVisite();
+
+    if (ussdService?.initialize) {
+      ussdService.initialize().catch(() => {});
+    }
+
+    verifierModule(); // appel initial
+
+    intervalleVerification.current = setInterval(verifierModule, 5000);
+
+    let abonnementSms = null;
+    if (MomoAutomationModule) {
+      abonnementSms = DeviceEventEmitter.addListener('onSmsReceived', (event) => {
+        const texte = event?.text || 'Aucun contenu';
+        ajouterEvenement('SMS reçu', texte);
+        Alert.alert('SMS intercepté', texte);
+      });
+    }
+
+    return () => {
+      clearInterval(intervalleVerification.current);
+      if (abonnementSms) abonnementSms.remove();
+    };
+  }, []);
+
+  // ----- Rendu : AUCUNE CONTRAINTE, tous les écrans accessibles -----
   const rendreEcranCourant = () => {
     switch (etatApp) {
-      case 'CHARGEMENT': return <EcranChargement />;
-      case 'ONBOARDING': return <OnboardingScreen auAllerConnexion={() => finaliserOnboarding('CONNEXION')} auAllerInscription={() => finaliserOnboarding('INSCRIPTION')} />;
-      case 'CONNEXION': return <ConnexionScreen auInscription={() => setEtatApp('INSCRIPTION')} auRetour={() => setEtatApp('ONBOARDING')} auOublieMdp={() => setEtatApp('OUBLIE_MDP')} />;
-      case 'INSCRIPTION': return <InscriptionScreen auConnexion={() => setEtatApp('CONNEXION')} auRetour={() => setEtatApp('CONNEXION')} />;
-      case 'OUBLIE_MDP': return <OublieMdpScreen auRetour={() => setEtatApp('CONNEXION')} />;
-      case 'PILOTE1': return <Pilote1Screen setAppState={setEtatApp} />;
-      case 'TRANSFERT': return <TransfertScreen setAppState={setEtatApp} />;
-      case 'FORFAIT': return <ForfaitScreen setAppState={setEtatApp} />;
-      default: return <EcranChargement />;
+      case 'CHARGEMENT':
+        return <EcranChargement />;
+      case 'ONBOARDING':
+        return (
+          <OnboardingScreen
+            auAllerConnexion={() => terminerOnboarding('CONNEXION')}
+            auAllerInscription={() => terminerOnboarding('INSCRIPTION')}
+          />
+        );
+      case 'CONNEXION':
+        return (
+          <ConnexionScreen
+            auInscription={() => setEtatApp('INSCRIPTION')}
+            auRetour={() => setEtatApp('ONBOARDING')}
+            auOublieMdp={() => setEtatApp('OUBLIE_MDP')}
+          />
+        );
+      case 'INSCRIPTION':
+        return (
+          <InscriptionScreen
+            auConnexion={() => setEtatApp('CONNEXION')}
+            auRetour={() => setEtatApp('CONNEXION')}
+          />
+        );
+      case 'OUBLIE_MDP':
+        return <OublieMdpScreen auRetour={() => setEtatApp('CONNEXION')} />;
+      case 'PILOTE1':
+        return <Pilote1Screen setAppState={setEtatApp} />;
+      case 'TRANSFERT':
+        return <TransfertScreen setAppState={setEtatApp} />;
+      case 'FORFAIT':
+        return <ForfaitScreen setAppState={setEtatApp} />;
+      default:
+        return <EcranChargement />;
     }
   };
 
   return (
-    <View style={styles.conteneurGlobal}>
+    <View style={styles.conteneur}>
       {rendreEcranCourant()}
 
-      {/* Bouton de log dynamique changeant de couleur selon la disponibilité réelle du module */}
+      {/* Bouton de diagnostic flottant (sans effet sur la navigation) */}
       {etatApp !== 'CHARGEMENT' && (
-        <TouchableOpacity 
-          style={[styles.boutonInspecteur, moduleEstActif ? styles.boutonActif : styles.boutonInactif]} 
-          onPress={afficherRapportGlobal}
+        <TouchableOpacity
+          style={[
+            styles.boutonInspecteur,
+            moduleEstActif ? styles.boutonActif : styles.boutonInactif,
+          ]}
+          onPress={afficherHistorique}
         >
           <Text style={styles.texteBouton}>
-            {moduleEstActif ? "🟢 Module OK" : "🔴 Module DOWN"}
+            {moduleEstActif ? '🟢 Module OK' : '🔴 Module ?'}
           </Text>
         </TouchableOpacity>
       )}
@@ -175,9 +170,7 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  conteneurGlobal: {
-    flex: 1,
-  },
+  conteneur: { flex: 1 },
   boutonInspecteur: {
     position: 'absolute',
     bottom: 90,
@@ -192,15 +185,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     zIndex: 9999,
   },
-  boutonActif: {
-    backgroundColor: '#065f46', // Vert foncé si les services répondent
-  },
-  boutonInactif: {
-    backgroundColor: '#991b1b', // Rouge si la liaison coupe ou est inexistante
-  },
-  texteBouton: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  }
+  boutonActif: { backgroundColor: '#065f46' },
+  boutonInactif: { backgroundColor: '#991b1b' },
+  texteBouton: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
 });
