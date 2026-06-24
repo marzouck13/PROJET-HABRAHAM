@@ -4,11 +4,9 @@
 
 const BASE_URL = "https://agentrixservice.onrender.com";
 
-// Helper pour gérer les réponses et les erreurs
 const handleResponse = async (response) => {
   const data = await response.json();
   if (!response.ok) {
-    // Si le serveur renvoie une erreur (400, 401, 500, etc.)
     throw data || { success: false, message: "Une erreur est survenue" };
   }
   return data;
