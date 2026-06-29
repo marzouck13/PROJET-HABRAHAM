@@ -5,6 +5,8 @@ const { sequelize, User, Number: NumberModel } = require('../Models');
 const prefixList = require('../config/prefix_list.json');
 
 const API_BASE_URL = process.env.ONLINE_API_URL || 'https://agentrixservice.onrender.com';
+// URL de l'API de vérification agent (à compléter avec votre lien définitif)
+const AGENT_CHECK_API_URL = process.env.AGENT_CHECK_API_URL || 'https://api.monservice.com/check_agent.php';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -130,13 +132,46 @@ exports.setPassword = async (req, res) => {
 
 /**
  * Ajoute un numéro de téléphone pour l’utilisateur authentifié.
- * Crée l’enregistrement local puis appelle l’API ; annule en cas d’échec.
+ * Vérifie d'abord que le numéro appartient à un agent via l'API check_agent.php.
+ * Ensuite crée l’enregistrement local puis appelle l’API ; annule en cas d’échec.
  *
- * @param {import('express').Request} req - body : { phoneNumber, userId } (userId nécessaire pour lier le numéro)
+ * @param {import('express').Request} req - body : { phoneNumber, userId }
  * @param {import('express').Response} res
  */
 exports.addNumber = async (req, res) => {
   const { phoneNumber, userId } = req.body;
+
+  // Nettoyage du numéro
+  const cleaned = phoneNumber.replace(/\s/g, '');
+  if (!/^\d{8,10}$/.test(cleaned)) {
+    return res.status(400).json({ message: 'Numéro de téléphone invalide' });
+  }
+
+  // 1. Vérification agent via l'API externe
+  try {
+    const checkResponse = await axios.get(AGENT_CHECK_API_URL, {
+      params: { numero: cleaned },   // paramètre INTEGER attendu par l'API
+      timeout: 10000,
+    });
+
+    const { success, data, message } = checkResponse.data;
+
+    if (!success) {
+      // Le numéro n'appartient pas à un agent
+      return res.status(400).json({
+        message: message || "Ce numéro n'est pas reconnu comme agent.",
+      });
+    }
+    // Optionnel : vous pouvez stocker des informations de `data` si nécessaire
+  } catch (error) {
+    // Erreur réseau ou API indisponible
+    console.error('Erreur lors de l’appel à l’API de vérification agent :', error.message);
+    return res.status(502).json({
+      message: 'Le service de vérification agent est indisponible.',
+    });
+  }
+
+  // 2. Détection de l’opérateur
   const operator = detectOperator(phoneNumber);
   if (!operator) {
     return res.status(400).json({ message: 'Numéro de téléphone invalide ou opérateur non supporté' });
@@ -154,7 +189,7 @@ exports.addNumber = async (req, res) => {
       UserKey: userId,
     }, { transaction: t });
 
-    // Appel API
+    // Appel API distante
     const response = await apiClient.post('/auth/add-number', {
       id: number.Id,
       phoneNumber,
