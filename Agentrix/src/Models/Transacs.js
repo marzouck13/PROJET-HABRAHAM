@@ -1,7 +1,7 @@
-// models/Transacs.js
+// Models/Transacs.js
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const Transacs = sequelize.define('Transacs', {
     Id: {
       type: DataTypes.UUID,
@@ -14,8 +14,7 @@ module.exports = (sequelize) => {
     },
     Amount: {
       type: DataTypes.DECIMAL(15, 2),
-      allowNull: false,
-      validate: { min: 0 }
+      allowNull: false
     },
     BalanceBefore: {
       type: DataTypes.DECIMAL(15, 2),
@@ -39,7 +38,6 @@ module.exports = (sequelize) => {
       { fields: ['UserKey', 'createdAt'] },
       { fields: ['NumberKey'] },
       { fields: ['Reseau', 'Type'] },
-      { fields: ['Type', 'createdAt'] },
       { fields: ['isSent'] }
     ]
   });

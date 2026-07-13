@@ -1,7 +1,7 @@
-// models/Number.js
+// Models/Number.js
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const Number = sequelize.define('Number', {
     Id: {
       type: DataTypes.UUID,
@@ -11,10 +11,7 @@ module.exports = (sequelize) => {
     PhoneNumber: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
-      validate: {
-        is: /^[0-9]{8,10}$/
-      }
+      unique: true
     },
     Reseau: {
       type: DataTypes.ENUM('MTN', 'MOOV', 'CELTIIS'),
@@ -24,15 +21,11 @@ module.exports = (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: true
     },
-    // Vérification spécifique au numéro
     isVerified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
-    verifiedAt: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
+    verifiedAt: DataTypes.DATE,
     isSent: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
@@ -43,7 +36,6 @@ module.exports = (sequelize) => {
       { fields: ['PhoneNumber'] },
       { fields: ['Reseau'] },
       { fields: ['UserKey'] },
-      { fields: ['isVerified'] },
       { fields: ['isSent'] }
     ]
   });

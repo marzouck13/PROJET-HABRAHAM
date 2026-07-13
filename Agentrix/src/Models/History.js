@@ -1,7 +1,7 @@
-// models/History.js
+// Models/History.js
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const History = sequelize.define('History', {
     Id: {
       type: DataTypes.UUID,
@@ -14,7 +14,7 @@ module.exports = (sequelize) => {
     },
     DayString: {
       type: DataTypes.STRING,
-      allowNull: false // Format: "YYYY-MM-DD"
+      allowNull: false
     },
     Year: {
       type: DataTypes.INTEGER,
@@ -24,7 +24,6 @@ module.exports = (sequelize) => {
       type: DataTypes.INTEGER,
       allowNull: false
     },
-    // Agrégats pour optimisation
     TotalDepots: {
       type: DataTypes.DECIMAL(15, 2),
       defaultValue: 0.00

@@ -1,7 +1,4 @@
-/**
- * Service d'Authentification Agentrix (Version Fetch Natif)
- */
-
+// services/AgentrixApi.js
 const BASE_URL = "https://agentrixservice.onrender.com";
 
 const handleResponse = async (response) => {
@@ -14,106 +11,138 @@ const handleResponse = async (response) => {
 
 export const AuthService = {
   
-  /**
-   * Inscription : name, firstname, number, password
-   */
   register: async (userData) => {
-    try {
-      const response = await fetch(`${BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: String(userData.name),
-          firstname: String(userData.firstname),
-          email: String(userData.email),
-          NPI: String(userData.NPI),
-          number: String(userData.number),
-          password: String(userData.password)
-        }),
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error("❌ [API] Erreur Register:", error);
-      throw error;
-    }
+    const response = await fetch(`${BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nom: String(userData.nom || ''),
+        prenom: String(userData.prenom || ''),
+        email: String(userData.email || '')
+      })
+    });
+    return await handleResponse(response);
   },
 
-  /**
-   * Vérification du code OTP
-   */
-  verifyCode: async (number, code) => {
-    try {
-      const response = await fetch(`${BASE_URL}/auth/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          number: String(number), 
-          code: String(code) 
-        }),
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error("❌ [API] Erreur VerifyCode:", error);
-      throw error;
-    }
+  verifyEmailOtp: async (email, otp) => {
+    const response = await fetch(`${BASE_URL}/auth/verify-email-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: String(email),
+        otp: String(otp)
+      })
+    });
+    return await handleResponse(response);
   },
 
-  /**
-   * Connexion (Retourne tokens et userId)
-   */
-  login: async (number, password) => {
-    try {
-      const response = await fetch(`${BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          number: String(number), 
-          password: String(password) 
-        }),
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error("❌ [API] Erreur Login:", error);
-      throw error;
-    }
+  setPassword: async (userId, password) => {
+    const response = await fetch(`${BASE_URL}/auth/set-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: String(userId),
+        password: String(password)
+      })
+    });
+    return await handleResponse(response);
   },
 
-  /**
-   * Mot de passe oublié (Envoi du code par SMS)
-   */
+  addNumber: async (userId, phoneNumber) => {
+    const response = await fetch(`${BASE_URL}/auth/add-number`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: String(userId),
+        phoneNumber: String(phoneNumber)
+      })
+    });
+    return await handleResponse(response);
+  },
+
+  verifyPhoneOtp: async (phoneNumber, otp) => {
+    const response = await fetch(`${BASE_URL}/auth/verify-phone-otp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phoneNumber: String(phoneNumber),
+        otp: String(otp)
+      })
+    });
+    return await handleResponse(response);
+  },
+
+  login: async (email, password) => {
+    const response = await fetch(`${BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        email: String(email), 
+        password: String(password) 
+      })
+    });
+    return await handleResponse(response);
+  },
+
+  refreshToken: async (refreshToken) => {
+    const response = await fetch(`${BASE_URL}/auth/token/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: String(refreshToken) })
+    });
+    return await handleResponse(response);
+  },
+
+  validateToken: async (accessToken) => {
+    const response = await fetch(`${BASE_URL}/auth/token/validate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accessToken: String(accessToken) })
+    });
+    return await handleResponse(response);
+  },
+
+  logout: async (refreshToken) => {
+    const response = await fetch(`${BASE_URL}/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: String(refreshToken) })
+    });
+    return await handleResponse(response);
+  },
+
   forgotPassword: async (number) => {
-    try {
-      const response = await fetch(`${BASE_URL}/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ number: String(number) }),
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error("❌ [API] Erreur ForgotPassword:", error);
-      throw error;
-    }
+    const response = await fetch(`${BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number: String(number) })
+    });
+    return await handleResponse(response);
   },
 
-  /**
-   * Réinitialisation finale du mot de passe
-   */
-  resetPassword: async (payload) => {
-    console.log(payload)
-    try {
-      const response = await fetch(`${BASE_URL}/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          number: String(payload.number),
-          code: String(payload.code),
-          newPassword: String(payload.newPassword)
-        })
-      });
-      return await handleResponse(response);
-    } catch (error) {
-      console.error("❌ [API] Erreur ResetPassword:", error);
-      throw error;
-    }
+  resetPassword: async (number, code, newPassword) => {
+    const response = await fetch(`${BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        number: String(number),
+        code: String(code),
+        newPassword: String(newPassword)
+      })
+    });
+    return await handleResponse(response);
+  },
+
+  changePassword: async (userId, currentPassword, newPassword) => {
+    const response = await fetch(`${BASE_URL}/auth/change-password`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: String(userId),
+        currentPassword: String(currentPassword),
+        newPassword: String(newPassword)
+      })
+    });
+    return await handleResponse(response);
   }
 };

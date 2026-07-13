@@ -1,7 +1,7 @@
-// models/User.js
+// Models/User.js
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
     Id: {
       type: DataTypes.UUID,
@@ -20,9 +20,9 @@ module.exports = (sequelize) => {
     },
     Password: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
+      defaultValue: ''
     },
-    // Statuts de vérification
     isEmailVerified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false
@@ -35,15 +35,8 @@ module.exports = (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false
     },
-    // Dates de vérification
-    emailVerifiedAt: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    phoneVerifiedAt: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
+    emailVerifiedAt: DataTypes.DATE,
+    phoneVerifiedAt: DataTypes.DATE,
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
@@ -56,13 +49,11 @@ module.exports = (sequelize) => {
     timestamps: true,
     indexes: [
       { fields: ['Email'] },
-      { fields: ['isFullyVerified'] },
       { fields: ['isSent'] }
     ]
   });
 
   User.associate = (models) => {
-    User.hasOne(models.OtpVerification, { foreignKey: 'UserKey', as: 'OtpVerification' });
     User.hasMany(models.Number, { foreignKey: 'UserKey', as: 'Numbers' });
     User.hasMany(models.Transacs, { foreignKey: 'UserKey', as: 'Transactions' });
     User.hasMany(models.History, { foreignKey: 'UserKey', as: 'Histories' });

@@ -1,267 +1,68 @@
-// agentrix/src/services/ussd/UssdLibrary.js
+// src/services/ussd/UssdLibrary.js
 
-/**
- * Bibliothèque de codes USSD dynamiques.
- * Chaque opérateur possède des actions avec :
- * - template : chaîne contenant des variables ${...}
- * - description : texte explicatif
- * - requiredVars : liste des variables obligatoires
- * - optionalVars : liste des variables facultatives
- */
-const UssdLibrary = {
-  // ======================== MTN Mobile Money ========================
-  mtn: {
-    balance: {
-      template: '*880*4#',
-      description: 'Consulter le solde du compte MTN Mobile Money',
-      requiredVars: [],
-      optionalVars: []
-    },
-    sendMoney: {
-      template: '*880*1*1*${recipient}*${amount}*${pin}#',
-      description: 'Transférer de l\'argent vers un autre compte MTN',
-      requiredVars: ['recipient', 'amount', 'pin'],
-      optionalVars: ['message']
-    },
-    buyCredit: {
-      template: '*100*2*${amount}#',
-      description: 'Acheter du crédit téléphonique pour soi-même',
-      requiredVars: ['amount'],
-      optionalVars: ['phoneNumber'] // si pour un autre numéro
-    },
-    buyCreditForOther: {
-      template: '*100*2*${phoneNumber}*${amount}#',
-      description: 'Acheter du crédit pour un autre numéro',
-      requiredVars: ['phoneNumber', 'amount'],
-      optionalVars: []
-    },
-    payBill: {
-      template: '*100*3*${merchantCode}*${amount}*${pin}#',
-      description: 'Payer une facture (eau, électricité, etc.)',
-      requiredVars: ['merchantCode', 'amount', 'pin'],
-      optionalVars: ['reference']
-    },
-    checkTransaction: {
-      template: '*100*4#',
-      description: 'Vérifier les dernières transactions',
-      requiredVars: [],
-      optionalVars: []
-    },
-    changePin: {
-      template: '*100*5*${oldPin}*${newPin}*${newPin}#',
-      description: 'Changer le code secret',
-      requiredVars: ['oldPin', 'newPin'],
-      optionalVars: []
-    },
-    withdrawCash: {
-      template: '*100*6*${amount}*${pin}#',
-      description: 'Retirer de l\'argent chez un marchand',
-      requiredVars: ['amount', 'pin'],
-      optionalVars: ['agentCode']
-    },
-  },
-
-  // ======================== Orange Money ========================
-  orange: {
-    balance: {
-      template: '*144#',
-      description: 'Consulter le solde Orange Money',
-      requiredVars: [],
-      optionalVars: []
-    },
-    sendMoney: {
-      template: '*144*1*${recipient}*${amount}*${pin}#',
-      description: 'Transfert d\'argent Orange Money',
-      requiredVars: ['recipient', 'amount', 'pin'],
-      optionalVars: []
-    },
-    buyCredit: {
-      template: '*144*2*${amount}#',
-      description: 'Acheter du crédit Orange',
-      requiredVars: ['amount'],
-      optionalVars: ['phoneNumber']
-    },
-    payBill: {
-      template: '*144*3*${merchantCode}*${amount}*${pin}#',
-      description: 'Payer une facture',
-      requiredVars: ['merchantCode', 'amount', 'pin'],
-      optionalVars: []
-    },
-    checkTransaction: {
-      template: '*144*4#',
-      description: 'Historique des transactions',
-      requiredVars: [],
-      optionalVars: []
-    },
-    changePin: {
-      template: '*144*5*${oldPin}*${newPin}*${newPin}#',
-      description: 'Modifier le code secret',
-      requiredVars: ['oldPin', 'newPin'],
-      optionalVars: []
-    },
-  },
-
-  // ======================== Wave ========================
-  wave: {
-    balance: {
-      template: '*201#',
-      description: 'Solde Wave',
-      requiredVars: [],
-      optionalVars: []
-    },
-    sendMoney: {
-      template: '*201*1*${recipient}*${amount}*${pin}#',
-      description: 'Envoyer de l\'argent via Wave',
-      requiredVars: ['recipient', 'amount', 'pin'],
-      optionalVars: []
-    },
-    buyCredit: {
-      template: '*201*2*${amount}#',
-      description: 'Acheter du crédit',
-      requiredVars: ['amount'],
-      optionalVars: []
-    },
-    withdrawCash: {
-      template: '*201*3*${amount}*${pin}#',
-      description: 'Retrait d\'espèces',
-      requiredVars: ['amount', 'pin'],
-      optionalVars: []
-    },
-  },
-
-  // ======================== Codes génériques / personnalisés ========================
-  generic: {
-    callBack: {
-      template: '*${serviceCode}*${phoneNumber}#',
-      description: 'Demander un rappel',
-      requiredVars: ['serviceCode', 'phoneNumber'],
-      optionalVars: []
-    },
-    checkService: {
-      template: '*${serviceCode}#',
-      description: 'Vérifier un service',
-      requiredVars: ['serviceCode'],
-      optionalVars: []
-    },
-    custom: {
-      template: '${code}',
-      description: 'Code USSD entièrement personnalisé',
-      requiredVars: ['code'],
-      optionalVars: []
-    }
-  }
+export const RESEAUX = {
+  MTN: 'MTN',
+  MOOV: 'MOOV',
+  CELTIIS: 'CELTIIS',
 };
 
-// ==================== Fonctions utilitaires de la bibliothèque ====================
-
 /**
- * Vérifie que toutes les variables requises sont fournies
- * @param {string} operator - Nom de l'opérateur
- * @param {string} action - Nom de l'action
- * @param {Object} vars - Variables fournies
- * @returns {string[]} Liste des variables manquantes
+ * Génère le code USSD pour un transfert d'agent à agent.
+ * Format actuel : *889*4*1*numero*montant*motif*2#
+ *
+ * @param {string} reseau - L'opérateur (MTN, MOOV, CELTIIS)
+ * @param {string} numeroDestinataire - Numéro du bénéficiaire
+ * @param {number|string} montant - Montant à transférer
+ * @param {string} motif - Raison du transfert (max ~10 caractères)
+ * @returns {string} Le code USSD à exécuter
  */
-function validateVariables(operator, action, vars = {}) {
-  const actionDef = UssdLibrary[operator]?.[action];
-  if (!actionDef) throw new Error(`Action ${operator}.${action} inconnue`);
+export function genererCodeTransfert(reseau, numeroDestinataire, montant, motif) {
+  const num = String(numeroDestinataire).replace(/\D/g, '');
+  const mtt = String(montant).replace(/\D/g, '');
+  const mtf = String(motif || '').trim().substring(0, 10);
 
-  const missing = actionDef.requiredVars.filter(v => !(v in vars) || vars[v] === undefined || vars[v] === '');
-  return missing;
-}
-
-/**
- * Remplace les variables dans le template
- * @param {string} template - Template USSD
- * @param {Object} vars - Variables à injecter
- * @returns {string} Code USSD final
- */
-function interpolate(template, vars = {}) {
-  return template.replace(/\$\{(\w+)\}/g, (match, key) => {
-    if (key in vars) return vars[key];
-    console.warn(`⚠️ Variable "${key}" non fournie, laissée telle quelle`);
-    return match;
-  });
-}
-
-/**
- * Récupère le code USSD final pour une action donnée
- * @param {string} operator - Opérateur
- * @param {string} action - Action
- * @param {Object} vars - Variables dynamiques
- * @returns {string} Code USSD prêt à être envoyé
- */
-function getUssdCode(operator, action, vars = {}) {
-  const actionDef = UssdLibrary[operator]?.[action];
-  if (!actionDef) throw new Error(`Action "${operator}.${action}" non trouvée`);
-
-  const missing = validateVariables(operator, action, vars);
-  if (missing.length > 0) {
-    throw new Error(`Variables manquantes pour ${operator}.${action} : ${missing.join(', ')}`);
+  switch (reseau) {
+    case RESEAUX.MTN:
+      return `*165*1*${num}*${mtt}*${mtf}*2#`;
+    case RESEAUX.MOOV:
+      return `*155*1*${num}*${mtt}*${mtf}*2#`;
+    case RESEAUX.CELTIIS:
+      return `*889*4*1*${num}*${mtt}*${mtf}*2#`;
+    default:
+      throw new Error(`Réseau inconnu : ${reseau}`);
   }
-
-  return interpolate(actionDef.template, vars);
 }
 
 /**
- * Ajoute ou modifie une action dans la bibliothèque
- * @param {string} operator - Opérateur
- * @param {string} action - Nom de l'action
- * @param {string} template - Template USSD
- * @param {string} description - Description
- * @param {string[]} requiredVars - Variables obligatoires
- * @param {string[]} optionalVars - Variables facultatives
+ * Récupère la liste des réseaux disponibles pour les numéros enregistrés d'un utilisateur.
+ *
+ * @param {Array} numerosEnregistres - Liste des numéros (objets avec propriété "Reseau")
+ * @returns {Array} Liste des réseaux uniques (ex: ['MTN', 'CELTIIS'])
  */
-function addAction(operator, action, template, description = '', requiredVars = [], optionalVars = []) {
-  if (!UssdLibrary[operator]) {
-    UssdLibrary[operator] = {};
-  }
-  UssdLibrary[operator][action] = {
-    template,
-    description,
-    requiredVars,
-    optionalVars
-  };
+export function obtenirReseauxDisponibles(numerosEnregistres) {
+  if (!numerosEnregistres || !Array.isArray(numerosEnregistres)) return [];
+  const reseaux = numerosEnregistres
+    .map(n => n.Reseau)
+    .filter(Boolean);
+  return [...new Set(reseaux)];
 }
 
-/**
- * Récupère la liste des opérateurs disponibles
- */
-function getOperators() {
-  return Object.keys(UssdLibrary);
+// ══════════════════════════════════════════════════════════════
+// Fonctions placeholder (ne pas toucher pour le moment)
+// ══════════════════════════════════════════════════════════════
+
+export function genererCodeDepot() {
+  throw new Error('Non implémenté');
 }
 
-/**
- * Récupère les actions disponibles pour un opérateur
- */
-function getActions(operator) {
-  return Object.keys(UssdLibrary[operator] || {});
+export function genererCodeRetrait() {
+  throw new Error('Non implémenté');
 }
 
-/**
- * Exporte toute la bibliothèque (pour sauvegarde)
- */
-function exportLibrary() {
-  return JSON.parse(JSON.stringify(UssdLibrary));
+export function genererCodeSolde() {
+  throw new Error('Non implémenté');
 }
 
-/**
- * Importe une bibliothèque externe (fusionne)
- */
-function importLibrary(lib) {
-  Object.entries(lib).forEach(([op, actions]) => {
-    if (!UssdLibrary[op]) UssdLibrary[op] = {};
-    Object.assign(UssdLibrary[op], actions);
-  });
+export function genererCodeAchatCredit() {
+  throw new Error('Non implémenté');
 }
-
-export {
-  UssdLibrary as default,
-  getUssdCode,
-  validateVariables,
-  interpolate,
-  addAction,
-  getOperators,
-  getActions,
-  exportLibrary,
-  importLibrary
-};

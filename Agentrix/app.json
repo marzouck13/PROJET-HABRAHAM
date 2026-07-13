@@ -4,5 +4,8 @@
   },
   "ios": {
     "bundleIdentifier": "com.anonymous.agentrix"
-  }
+  },
+  "plugins": [
+    "expo-sqlite"
+  ]
 }

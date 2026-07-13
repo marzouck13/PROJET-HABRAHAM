@@ -1,7 +1,7 @@
-// models/Sold.js
+// Models/Sold.js
 const { DataTypes } = require('sequelize');
 
-module.exports = (sequelize) => {
+module.exports = (sequelize, DataTypes) => {
   const Sold = sequelize.define('Sold', {
     Id: {
       type: DataTypes.UUID,
@@ -13,10 +13,7 @@ module.exports = (sequelize) => {
       defaultValue: 0.00,
       allowNull: false
     },
-    LastTransactionDate: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
+    LastTransactionDate: DataTypes.DATE,
     isSent: {
       type: DataTypes.BOOLEAN,
       defaultValue: false

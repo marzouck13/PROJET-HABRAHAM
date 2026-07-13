@@ -3,7 +3,8 @@
     "android": {
       "modules": [
         "com.anonymous.momoautomation.MomoBridge"
-      ]
+      ],
+      "sourceDir": "./momoautomation"
     }
   }
 }
